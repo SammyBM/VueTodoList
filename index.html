@@ -1,0 +1,222 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de tareas</title>
+    <script src="./modal.css"></script>
+    <script src="https://unpkg.com/vue@3"></script>
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar navbar-dark bg-dark">
+            <div class="col">
+                <form class="container-fluid justify-content-start">
+                    <span class="navbar-brand">
+                        Lista de tareas
+                        <span class="badge bg-success">Vue</span>
+                    </span>
+                    <button type="button" class="btn btn-outline-success me-2" @click="showModal">Nueva tarea</button>
+                </form>
+            </div>
+            <div class="col-1 text-center">
+                <label class="form-check-label" style="color: antiquewhite;" for="formatSwitch">Cambiar
+                    vista</label>
+                <form class="form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="formatSwitch"
+                        @click="alternarVista">
+                </form>
+            </div>
+        </nav>
+
+        <!-- Modal -->
+        <div v-if="modalOn" style="align-self: center;">
+            <div class="card" style="width: 30rem; text-align: center;">
+                <div class="card-header">
+                    <h3 class="card-title">Nueva tarea</h3>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Titulo" v-model="nuevoTitulo" required>
+                        <div class="invalid-feedback">
+                            Por favor ingrese un titulo.
+                        </div>
+                        <input type="date" class="form-control" placeholder="Fecha" v-model="nuevaFecha" required>
+                        <div class="invalid-feedback">
+                            Por favor ingrese una fecha
+                        </div>
+                    </div>
+                    <div class="input-group-text">
+                        <span class="input-group-text">Descripcion</span>
+                        <textarea class="form-control" v-model="nuevaDescripcion"></textarea>
+                    </div>
+                    <div class="input-group-text">
+                        <span class="input-group-text">Comentarios</span>
+                        <textarea class="form-control" v-model="nuevoComentario"></textarea>
+                    </div>
+                    <div class="input-group mb3">
+                        <span class="input-group-text" id="tagFormat">#</span>
+                        <input type="text" class="form-control" placeholder="Tags" v-model="nuevoTag">
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col">
+                            <button type="button" class="btn btn-secondary" @click="showModal">Cancelar</button>
+                        </div>
+                        <div class="col">
+                            <template v-if="nuevoTitulo == ''">
+                                <button type="submit" class="btn btn-success" @click="agregarTarea"
+                                    disabled>Agregar</button>
+                            </template>
+                            <template v-else>
+                                <button type="submit" class="btn btn-success" @click="agregarTarea">Agregar</button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div v-if="!modalOn">
+
+            <!-- Vista Tarjetas -->
+            <div v-if="vistaTarjetas">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="card" style="width: 30 rem;">
+                            <div class="card-header" style="background-color:seagreen;">
+                                Por completar
+                            </div>
+                            <div class="card-body">
+                                <div v-for="tarea in tareas" :key="tarea.id">
+                                    <div v-if="!tarea.completada">
+                                        <div class="card" style="width: 20rem;">
+                                            <div class="card-header">
+                                                <h3 class="card-title text-black"><input class="form-check-input"
+                                                        type="checkbox" v-model="tarea.completada" @click="marcarTarea"
+                                                        aria-label="..."><strong>{{tarea.titulo}}</strong></h3>
+                                                <h6 class="card-subtitle mb-2 text-muted">
+                                                    {{obtenerMes(tarea.fecha.getMonth())}}
+                                                    {{tarea.fecha.getDate()}} {{tarea.fecha.getFullYear()}}</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <h5 class="justify-content-between"><small>{{tarea.descripcion}}</small>
+                                                </h5>
+                                                <h6><strong>Comentarios:</strong></h6>
+                                                <h6 class="text-muted justify-content-between">
+                                                    <em>{{tarea.comentarios}}</em>
+                                                </h6>
+                                                <h6><strong>Etiquetas:</strong></h6>
+                                                <h6 class="text-muted justify-content-between">
+                                                    <small>{{tarea.etiquetas}}</small>
+                                                </h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card" style="width: 30 rem;">
+                            <div class="card-header" style="background-color:royalblue;">
+                                Completadas
+                            </div>
+                            <div class="card-body">
+                                <div v-for="tarea in tareas" :key="tarea.id">
+                                    <div v-if="tarea.completada">
+                                        <div class="card" style="width: 20rem;">
+                                            <div class="card-header">
+                                                <h3 class="card-title text-black"><input class="form-check-input"
+                                                        type="checkbox" v-model="tarea.completada" @click="marcarTarea"
+                                                        aria-label="..."><strong><s>{{tarea.titulo}}</s></strong></h3>
+                                                <h6 class="card-subtitle mb-2 text-muted">
+                                                    {{obtenerMes(tarea.fecha.getMonth())}}
+                                                    {{tarea.fecha.getDate()}} {{tarea.fecha.getFullYear()}}</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <h5 class="justify-content-between"><small>{{tarea.descripcion}}</small>
+                                                </h5>
+                                                <h6><strong>Comentarios:</strong></h6>
+                                                <h6 class="text-muted justify-content-between">
+                                                    <em>{{tarea.comentarios}}</em>
+                                                </h6>
+                                                <h6><strong>Etiquetas:</strong></h6>
+                                                <h6 class="text-muted justify-content-between">
+                                                    <small>{{tarea.tags}}</small>
+                                                </h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Vista lista -->
+            <div v-else>
+                <ul class="list-group">
+                    <div class="row">
+                        <div class="col-sm">
+                            <h5>Completada</h5>
+                        </div>
+                        <div class="col-sm-2">
+                            <h5>Titulo</h5>
+                        </div>
+                        <div class="col-sm">
+                            <h5>Fecha</h5>
+                        </div>
+                        <div class="col-sm">
+                            <h5>Comentarios</h5>
+                        </div>
+                        <div class="col-sm-2 ">
+                            <h5>Descripcion</h5>
+                        </div>
+                        <div class="col-sm text-center">
+                            <h6>Tags<h6>
+                        </div>
+                        <li class="list-group-item" v-for="tarea in tareas" :key="id">
+                            <div class="row">
+                                <div class="row">
+                                    <div class="col-sm text-center"><input class="form-check-input" type="checkbox"
+                                            v-model="tarea.completada" @click="marcarTarea" aria-label="..."></div>
+                                    <div class="col-sm-2">
+                                        <template v-if="tarea.completada">
+                                            <h6><s>{{tarea.titulo}}</s></h6>
+                                        </template>
+                                        <template v-else>
+                                            <h6><strong>{{tarea.titulo}}</strong></h6>
+                                        </template>
+                                    </div>
+                                    <div class="col-sm">
+                                        <h6 class="text-muted">{{obtenerMes(tarea.fecha.getMonth())}}
+                                            {{tarea.fecha.getDate()}} {{tarea.fecha.getFullYear()}}</h6>
+                                    </div>
+                                    <div class="col-sm text-truncate">
+                                        <h6><small>{{tarea.comentarios}}</small></h6>
+                                    </div>
+                                    <div class="col-sm-2 text-truncate">
+                                        <h6><small>{{tarea.descripcion}}</small></h6>
+                                    </div>
+                                    <div class="col-sm text-center text-truncate">
+                                        <h6><small>{{tarea.tags}}</small></h6>
+                                    </div>
+                        </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="./app.js"></script>
+</body>
+
+</html>
